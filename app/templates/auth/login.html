@@ -8,6 +8,8 @@
 </div>
 <div class="col-md-4">
     {{ wtf.quick_form(form)}}
+    <br>
+    <p>Forgot your password? <a href="{{ url_for('auth.password_reset_request') }}">Click here</a> to reset it.</p>
     <p>
         New User?
         <a href="{{ url_for('auth.register') }}">
