@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Flasky - Internal Server Error{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Internal Server Error</h1>
+    <p>Click <a href="{{ url_for('index', _external=True )}}">here</a> to return to the home page.</p>
+</div>
+
+{% endblock %}
