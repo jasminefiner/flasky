@@ -3,6 +3,7 @@
 {% block title %}Flasky - {{ user.username }}{% endblock %}
 
 {% block page_content %}
+<img class="img-rounded profile-tumbnail" src="{{ user.gravatar(size=256)}}" alt="">
 <div class="page-header">
     <h1>{{ user.username }}</h1>
     {% if user.name or user.location %}
@@ -22,5 +23,8 @@
     {% if user == current_user %}
     <a class="btn btn-default" href="{{ url_for('.edit_profile') }}">Edit Profile</a>
     {% endif %}
+    {% if current_user.is_administrator() %}
+    <a class="btn btn-danger" href="{{ url_for('.edit_profile_admin', id=user.id) }}">Edit Profile [Admin]</a>
+    {% endif  %}
 </div>
 {% endblock %}
