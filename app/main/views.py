@@ -181,3 +181,32 @@ def followed_by(username):
     pagination = user.followed.paginate(page, per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'], error_out=False)
     follows = [{'user':item.followed, 'timestamp': item.timestamp} for item in pagination.items]
     return render_template('followers.html', user=user, title='Followed by', endpoint='.followed_by', pagination=pagination, follows=follows)
+
+@main.route('/moderate')
+@login_required
+@permission_required(Permission.MODERATE)
+def moderate():
+    page = request.args.get('page', 1, type=int)
+    pagination = Comment.query.order_by(Comment.timestamp.desc()).paginate(page, per_page=current_app.config['FLASKY_COMMENTS_PER_PAGE'], error_out=False)
+    comments = pagination.items
+    return render_template('moderate.html', comments=comments, pagination=pagination, page=page)
+
+@main.route('/moderate/enable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE)
+def moderate_enable(id):
+    comment = Comment.query.get_or_404(id)
+    comment.disabled=False
+    db.session.add(comment)
+    db.session.commit()
+    return redirect(url_for('.moderate', page=request.args.get('page', 1, type=int)))
+
+@main.route('/moderate/disable/<int:id>')
+@login_required
+@permission_required(Permission.MODERATE)
+def moderate_disable(id):
+    comment = Comment.query.get_or_404(id)
+    comment.disabled=True
+    db.session.add(comment)
+    db.session.commit()
+    return redirect(url_for('.moderate', page=request.args.get('page', 1, type=int)))
