@@ -1,4 +1,4 @@
-from flask import render_template, session, redirect, url_for, current_app, flash, request
+from flask import render_template, session, redirect, url_for, current_app, flash, request, abort
 from flask_login import login_required, current_user
 from .. import db
 from ..models import User, Role, Permission, Post
@@ -121,7 +121,8 @@ def unfollow(username):
     if not current_user.is_following(user):
         flash('You are not following this user.')
         return redirect(url_for('.user', username=username))
-    db.session.delete(user)
+    current_user.unfollow(user)
+    db.session.commit()
     flash('You are no longer following %s' % username)
     return redirect(url_for('.user', username=username))
 
@@ -137,7 +138,7 @@ def followers(username):
     follows = [{'user':item.follower, 'timestamp': item.timestamp} for item in pagination.items]
     return render_template('followers.html', user=user, title='Followers of', endpoint='.followers', pagination=pagination, follows=follows)
 
-@main.route('/followed-by/<username>')
+@main.route('/followed_by/<username>')
 def followed_by(username):
     user = User.query.filter_by(username=username).first()
     if user is None:
