@@ -41,7 +41,7 @@ def test(coverage):
 @app.cli.command()
 def deploy():
     """Run deployment tasks."""
-    # migrate the database to latest revision
+    # migrate database to latest revision
     upgrade()
 
     # create or update user roles
