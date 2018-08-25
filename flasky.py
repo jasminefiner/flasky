@@ -38,6 +38,17 @@ def test(coverage):
         print('HTML version: file://%s/index.html' % covdir)
         COV.erase()
 
+@app.cli.command()
+def deploy():
+    """Run deployment tasks."""
+    # migrate the database to latest revision
+    upgrade()
+
+    # create or update user roles
+    Role.insert_roles()
+
+    # ensure all users are following themselves
+    User.add_self_follows()
 
 # @app.cli.command()
 # @click.option('--length', default=25, help='Number of functions to include in the profiler report.')
