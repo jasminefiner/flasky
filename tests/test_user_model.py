@@ -1,5 +1,3 @@
-# Password hashing tests
-
 import unittest
 import time
 from datetime import datetime
@@ -115,6 +113,24 @@ class UserModelTestCase(unittest.TestCase):
         self.assertFalse(u.can(Permission.MODERATE))
         self.assertFalse(u.can(Permission.ADMIN))
 
+    def test_moderator_role(self):
+        r = Role.query.filter_by(name='Moderator').first()
+        u = User(email='john@example.com', password='cat', role=r)
+        self.assertTrue(u.can(Permission.FOLLOW))
+        self.assertTrue(u.can(Permission.COMMENT))
+        self.assertTrue(u.can(Permission.WRITE))
+        self.assertTrue(u.can(Permission.MODERATE))
+        self.assertFalse(u.can(Permission.ADMIN))
+
+    def test_administrator_role(self):
+        r = Role.query.filter_by(name='Administrator').first()
+        u = User(email='john@example.com', password='cat', role=r)
+        self.assertTrue(u.can(Permission.FOLLOW))
+        self.assertTrue(u.can(Permission.COMMENT))
+        self.assertTrue(u.can(Permission.WRITE))
+        self.assertTrue(u.can(Permission.MODERATE))
+        self.assertTrue(u.can(Permission.ADMIN))
+
     def test_anonymous_user(self):
         u = AnonymousUser()
         self.assertFalse(u.can(Permission.FOLLOW))
@@ -122,7 +138,6 @@ class UserModelTestCase(unittest.TestCase):
         self.assertFalse(u.can(Permission.WRITE))
         self.assertFalse(u.can(Permission.MODERATE))
         self.assertFalse(u.can(Permission.ADMIN))
-
 
     def test_timestamps(self):
         u = User(password='cat')
@@ -171,8 +186,8 @@ class UserModelTestCase(unittest.TestCase):
         self.assertTrue(u1.is_following(u2))
         self.assertFalse(u1.is_followed_by(u2))
         self.assertTrue(u2.is_followed_by(u1))
-        self.assertTrue(u1.followed.count() == 1)
-        self.assertTrue(u2.followers.count() == 1)
+        self.assertTrue(u1.followed.count() == 2)
+        self.assertTrue(u2.followers.count() == 2)
         f = u1.followed.all()[-1]
         self.assertTrue(f.followed == u2)
         self.assertTrue(timestamp_before <= f.timestamp <= timestamp_after)
@@ -181,13 +196,24 @@ class UserModelTestCase(unittest.TestCase):
         u1.unfollow(u2)
         db.session.add(u1)
         db.session.commit()
-        self.assertTrue(u1.followed.count() == 0)
-        self.assertTrue(u2.followers.count() == 0)
-        self.assertTrue(Follow.query.count() == 0)
+        self.assertTrue(u1.followed.count() == 1)
+        self.assertTrue(u2.followers.count() == 1)
+        self.assertTrue(Follow.query.count() == 2)
         u2.follow(u1)
         db.session.add(u1)
         db.session.add(u2)
         db.session.commit()
         db.session.delete(u2)
         db.session.commit()
-        self.assertTrue(Follow.query.count() == 0)
+        self.assertTrue(Follow.query.count() == 1)
+
+    def test_to_json(self):
+        u = User(email='john@example.com', password='cat')
+        db.session.add(u)
+        db.session.commit()
+        with self.app.test_request_context('/'):
+            json_user = u.to_json()
+        expected_keys = ['url', 'username', 'member_since', 'last_seen',
+                         'posts_url', 'followed_posts_url', 'post_count']
+        self.assertEqual(sorted(json_user.keys()), sorted(expected_keys))
+        self.assertEqual('/api/v1/users/' + str(u.id), json_user['url'])

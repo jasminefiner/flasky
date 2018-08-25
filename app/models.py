@@ -109,7 +109,7 @@ class User(UserMixin, db.Model):
         json_user = {
             'url': url_for('api.get_user', id=self.id),
             'username': self.username,
-            'memer_since': self.memer_since,
+            'member_since': self.member_since,
             'last_seen': self.last_seen,
             'posts_url': url_for('api.get_user_posts', id=self.id),
             'followed_posts_url': url_for('api.get_user_followed_posts', id=self.id),
@@ -192,7 +192,7 @@ class User(UserMixin, db.Model):
 
     @staticmethod
     def verify_auth_token(token):
-        s = Serialiser(current_app.config['SECRET_KEY'])
+        s = Serializer(current_app.config['SECRET_KEY'])
         try:
             data = s.loads(token)
         except:
@@ -317,5 +317,23 @@ class Comment(db.Model):
         target.body_html = bleach.linkify(bleach.clean(
             markdown(value, output_format='html'),
             tags=allowed_tags, strip=True))
+
+    def to_json(self):
+        json_comment = {
+            'url': url_for('api.get_comment', id=self.id),
+            'post_url': url_for('api.get_post', id=self.post_id),
+            'body': self.body,
+            'body_html': self.body_html,
+            'timestamp': self.timestamp,
+            'author_url': url_for('api.get_user', id=self.author_id),
+        }
+        return json_comment
+
+    @staticmethod
+    def from_json(json_comment):
+        body = json_comment.get('body')
+        if body is None or body == '':
+            raise ValidationError('comment does not have a body')
+        return Comment(body=body)
 
 db.event.listen(Comment.body, 'set', Comment.on_changed_body)
